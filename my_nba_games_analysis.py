@@ -25,6 +25,71 @@ def print_nba_game_stats(data_dict):
     if t_fta != 0: 
         t_ft_p= round(t_ft/t_fta,3)
     print("Team Totals {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}   {}\n".format(t_fg,t_fga,t_fg_p,t_p,t_pa,t_p_p,t_ft,t_fta,t_ft_p,t_orb,t_drb,t_trb,t_ast,t_stl,t_blk,t_tov,t_pf,t_pts))
+
+def add_data(data, ah_list):
+    temp_list = []
+    for sr in data:
+        temp_list.append({"player_name":sr["player_name"],"FG": 0, "FGA": 0, "FG%": 0, "3P": 0, "3PA": 0, "3P%":0, "FT": 0, "FTA": 0, "FT%": 0, "ORB": 0, "DRB": 0, "TRB": 0, "AST": 0, "STL": 0, "BLK": 0, "TOV": 0, "PF": 0, "PTS":0 })
+    for i in range(len(temp_list)): 
+        if temp_list[i] not in temp_list[i + 1:]: 
+            ah_list.append(temp_list[i])
+    for w in ah_list:
+        for s in data:
+            if s["player_name"]==w["player_name"]:
+                w["FG"] +=s["FG"]
+                w["FGA"] +=s["FGA"]
+                w["3P"] +=s["3P"]
+                w["3PA"] +=s["3PA"]
+                w["FT"] +=s["FT"]
+                w["FTA"] +=s["FTA"]
+                w["ORB"] +=s["ORB"]
+                w["DRB"] +=s["DRB"]
+                w["TRB"] +=s["TRB"]
+                w["TOV"] +=s["TOV"]
+                w["PTS"] +=s["PTS"]
+    for  q in ah_list:
+        if q["FGA"] !=0:
+            q["FG%"] = round(q["FG"] /q["FGA"],3)
+        if q["3PA"] !=0:
+            q["3P%"] = round(q["3P"] /q["3PA"],3)
+        if q["FTA"] !=0:
+            q["FT%"] = round(q["FT"] /q["FTA"],3)
+    return ah_list
+
+def count_data(players,ah_list,cur_tname,a_tname):
+    import re
+    for f in range(len(players)):
+        nmatch =  re.search(r'[A-Z]. [A-Z]\w+\)',players[f][7])
+        _match =  re.search(r'[A-Z]. [A-Z]\w+',players[f][7])
+        ast1 = re.search(r'assist',players[f][7])
+        blk1 = re.search(r'block',players[f][7])
+        stl1 = re.search(r'steal',players[f][7])
+        pf1 = re.search(r'Personal foul by',players[f][7])
+        sh_f = re.search(r'Shooting foul by',players[f][7])
+        of_f = re.search(r'Offensive foul by',players[f][7])
+        l_f = re.search(r'Clear path foul by',players[f][7])
+        if _match!=None:
+            if sh_f!=None or l_f!=None or of_f!=None  or pf1!=None:
+                for h in ah_list:
+                    if _match.group()==h["player_name"]:
+                        h["PF"]+=1
+        if blk1!=None and players[f][2]==a_tname and nmatch!=None:
+            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
+            for h in ah_list:
+                if m.group()==h["player_name"]:
+                    h["BLK"]+=1
+        if stl1!=None and players[f][2]==a_tname and nmatch!=None:
+            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
+            for h in ah_list:
+                if m.group()==h["player_name"]:
+                    h["STL"]+=1
+        if ast1!=None and players[f][2]==cur_tname and nmatch!=None:
+            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
+            for h in ah_list:
+                if m.group()==h["player_name"]:
+                    h["AST"]+=1
+    return ah_list
+
 def analyse_nba_game(players):
     import re
     h_players_data=[]
@@ -84,112 +149,13 @@ def analyse_nba_game(players):
             if players[c][2]==players[0][4]:
                 if foul==None:
                     h_players_data.append({"player_name":match.group(),"FG": fg, "FGA": fga, "FG%": d, "3P": p, "3PA": pa, "3P%":d, "FT": ft, "FTA": fta, "FT%": d, "ORB": orb, "DRB": drb, "TRB": trb, "AST": ast, "STL": stl, "BLK": blk, "TOV": tov, "PF": pf, "PTS": pts})
-            
             fg=fga=p=pa=ft=fta=orb=drb=trb=tov=pf=pts=0
-    home_list = []
-    for sr in h_players_data:
-        home_list.append({"player_name":sr["player_name"],"FG": 0, "FGA": 0, "FG%": 0, "3P": 0, "3PA": 0, "3P%":0, "FT": 0, "FTA": 0, "FT%": 0, "ORB": 0, "DRB": 0, "TRB": 0, "AST": 0, "STL": 0, "BLK": 0, "TOV": 0, "PF": 0, "PTS":0 })
-    for i in range(len(home_list)): 
-        if home_list[i] not in home_list[i + 1:]: 
-            h_res_list.append(home_list[i])
-    for w in h_res_list:
-        for s in h_players_data:
-            if s["player_name"]==w["player_name"]:
-                w["FG"] +=s["FG"]
-                w["FGA"] +=s["FGA"]
-                w["3P"] +=s["3P"]
-                w["3PA"] +=s["3PA"]
-                w["FT"] +=s["FT"]
-                w["FTA"] +=s["FTA"]
-                w["ORB"] +=s["ORB"]
-                w["DRB"] +=s["DRB"]
-                w["TRB"] +=s["TRB"]
-                w["TOV"] +=s["TOV"]
-                w["PTS"] +=s["PTS"]
-    for  q in h_res_list:
-        if q["FGA"] !=0:
-            q["FG%"] = round(q["FG"] /q["FGA"],3)
-        if q["3PA"] !=0:
-            q["3P%"] = round(q["3P"] /q["3PA"],3)
-        if q["FTA"] !=0:
-            q["FT%"] = round(q["FT"] /q["FTA"],3)
-    away_list = []
-    for aw in a_players_data:
-        away_list.append({"player_name":aw["player_name"],"FG": 0, "FGA": 0, "FG%": 0, "3P": 0, "3PA": 0, "3P%":0, "FT": 0, "FTA": 0, "FT%": 0, "ORB": 0, "DRB": 0, "TRB": 0, "AST": 0, "STL": 0, "BLK": 0, "TOV": 0, "PF": 0, "PTS":0 })
-    for j in range(len(away_list)): 
-        if away_list[j] not in away_list[j + 1:]: 
-            a_res_list.append(away_list[j])
-    for v in a_res_list:
-        for x in a_players_data:
-            if x["player_name"]==v["player_name"]:
-                v["FG"] +=x["FG"]
-                v["FGA"] +=x["FGA"]
-                v["3P"] +=x["3P"]
-                v["3PA"] +=x["3PA"]
-                v["FT"] +=x["FT"]
-                v["FTA"] +=x["FTA"]
-                v["ORB"] +=x["ORB"]
-                v["DRB"] +=x["DRB"]
-                v["TRB"] +=x["TRB"]
-                v["TOV"] +=x["TOV"]
-                v["PTS"] +=x["PTS"]
-    for  q in a_res_list:
-        if q["FGA"] !=0:
-            q["FG%"] = round(q["FG"] /q["FGA"],3)
-        if q["3PA"] !=0:
-            q["3P%"] = round(q["3P"] /q["3PA"],3)
-        if q["FTA"] !=0:
-            q["FT%"] = round(q["FT"] /q["FTA"],3)
-    for f in range(len(players)):
-        nmatch =  re.search(r'[A-Z]. [A-Z]\w+\)',players[f][7])
-        _match =  re.search(r'[A-Z]. [A-Z]\w+',players[f][7])
-        ast1 = re.search(r'assist',players[f][7])
-        blk1 = re.search(r'block',players[f][7])
-        stl1 = re.search(r'steal',players[f][7])
-        pf1 = re.search(r'Personal foul by',players[f][7])
-        sh_f = re.search(r'Shooting foul by',players[f][7])
-        of_f = re.search(r'Offensive foul by',players[f][7])
-        l_f = re.search(r'Clear path foul by',players[f][7])
-        #b_f = re.search(r'ball foul by',players[f][7])
-        #all_f = re.search(r'foul by',players[f][7])
-        if _match!=None:
-            if sh_f!=None or l_f!=None or of_f!=None  or pf1!=None:
-                for h in h_res_list:
-                    if _match.group()==h["player_name"]:
-                        h["PF"]+=1
-                for h in a_res_list:
-                    if _match.group()==h["player_name"]:
-                        h["PF"]+=1
-        if blk1!=None and players[f][2]==players[0][3] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for h in h_res_list:
-                if m.group()==h["player_name"]:
-                    h["BLK"]+=1
-        if blk1!=None and players[f][2]==players[0][4] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for t in a_res_list:
-                if m.group()==t["player_name"]:
-                    t["BLK"]+=1
-        if stl1!=None and players[f][2]==players[0][3] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for h in h_res_list:
-                if m.group()==h["player_name"]:
-                    h["STL"]+=1
-        if stl1!=None and players[f][2]==players[0][4] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for t in a_res_list:
-                if m.group()==t["player_name"]:
-                    t["STL"]+=1
-        if ast1!=None and players[f][2]==players[0][4] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for h in h_res_list:
-                if m.group()==h["player_name"]:
-                    h["AST"]+=1
-        if ast1!=None and players[f][2]==players[0][3] and nmatch!=None:
-            m = re.search(r'[A-Z]. [A-Z]\w+',nmatch.group())
-            for t in a_res_list:
-                if m.group()==t["player_name"]:
-                    t["AST"]+=1
+    
+    h_res_list = add_data(h_players_data, h_res_list)
+    a_res_list = add_data(a_players_data, a_res_list)
+    
+    h_res_list = count_data(players,h_res_list,players[0][4],players[0][3])
+    a_res_list = count_data(players,a_res_list,players[0][3],players[0][4])
     #print(res)
     print_nba_game_stats(data_home)
     print_nba_game_stats(data_away)
